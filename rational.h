@@ -9,7 +9,7 @@ long long gcd(long long a, long long b){
     return gcdabs(abs(a), abs(b));
 }
 
-struct rational {
+const struct rational {
     long long l, m;
 
     rational(long long a, long long b){
@@ -60,9 +60,38 @@ struct rational {
     rational operator/ (const rational& b) const {
         return (*this) * !b;
     }
-};
+
+    bool operator== (const rational& o) const {
+        return l == o.l && m == o.m;
+    }
+
+    bool operator!= (const rational& o) const {
+        return !(*this == o);
+    }
+
+    bool operator< (const rational& o) const {
+        return l * o.m < m * o.l;
+    }
+} ZERO(0, 1), ONE(1, 1);
 
 rational abs(const rational& a){
     if (a.l >= 0) return a;
     return rational(-a.l, a.m);
+}
+
+rational parse_rational(const std::string &str){
+    int idx_of_slash = -1;
+    for(int i = 0; i < str.size(); ++i){
+        if (str[i] == '/' || str[i] == '\\'){
+            if (idx_of_slash != -1){
+                std::cerr << "TOKEN ZAWIERA ZBYT DUZO UKOSNIKOW!!" << std::endl;
+                exit(136);
+            }
+            idx_of_slash = i;
+        }
+    }
+    if (idx_of_slash == -1){
+        return rational(stoll(str), 1);
+    }
+    return rational(stoll(str.substr(0, idx_of_slash)), stoll(str.substr(idx_of_slash + 1)));
 }

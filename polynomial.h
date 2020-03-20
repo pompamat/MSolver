@@ -2,94 +2,161 @@
 #include "rational.h"
 #include <vector>
 #include <iostream>
+#include <assert.h>
+#include <algorithm>
+#include <cctype>
 
-struct monomial {
-    std::string token;
-    rational amount;
+using std::vector;
+using std::pair;
+using std::ostream;
+using std::sort;
+using std::string;
 
-    friend std::ostream& operator <<(std::ostream& str, const monomial &p) {
-        if (p.token == "" || p.amount.l == 0) str << p.amount;
-        else {
-            if (abs(p.amount.l) == 1 && p.amount.m == 1){
-                if (p.amount.l < 0) str << "-";
-                str << p.token;
-            } else str << p.amount << p.token;
+using namespace std;
+
+struct monomial { // struct representing single monomial, eg. -2/3pq^2
+    vector<pair<char, int>> variables; //with positive integer multiplicity
+    rational coef;
+
+    monomial(vector<pair<char, int>> variables_, const rational& r) : coef(r) {
+        if (r == ZERO){
+            variables = {};
+        } else {
+            sort(variables_.begin(), variables_.end());
+            char last_variable = '0';
+
+            for (const auto& variable : variables_){
+                assert(islower(variable.first));
+                if (last_variable == variable.first){
+                    variables.back().second += variable.second;
+                } else {
+                    variables.push_back(variable);
+                }
+                last_variable = variable.first;
+            }
+        }
+    }
+
+    friend ostream& operator <<(ostream& str, const monomial &p) {
+        if (p.variables.size() == 0) {
+            str << p.coef;
+        } else {
+            if (abs(p.coef) == ONE) {
+                if (p.coef < ZERO) str << "-";
+            } else str << p.coef;
+            for (const auto& variable : p.variables) {
+                str << variable.first;
+                if (variable.second > 1){
+                    str << "^" << variable.second;
+                }
+            }
         }
         return str;
     }
+
+    bool is_compatible(const monomial& o) const {
+        if (variables.size() != o.variables.size()) return false;
+        for (int i = 0; i < variables.size(); ++i){
+            if (variables[i] != o.variables[i]) return false;
+        }
+        return true;
+    }
+
+    bool operator< (const monomial& o) const {
+        int t = 0;
+        while(t < variables.size()){
+            if (t == o.variables.size()) return false;
+            if (variables[t] != o.variables[t]) return variables[t] < o.variables[t];
+            t++;
+        }
+        if (variables.size() < o.variables.size()) return true;
+        return coef < o.coef; //identical up to factor
+    }
 };
+
 
 struct polynomial {
-    std::vector<monomial> monomials;
+    vector<monomial> monomials;
 
-    friend std::ostream& operator <<(std::ostream& str, const polynomial &p) {
-        bool nic_wpisalem = true;
-        for(const monomial& m : p.monomials){
-            if (m.amount.l != 0){
-                if (m.amount.l < 0) str << m;
-                else {
-                    if (!nic_wpisalem) str << "+";
-                    str << m;
-                }
-                nic_wpisalem = false;
+    polynomial(vector<monomial> monomials_) {
+        sort(monomials_.begin(), monomials_.end());
+        for (const auto& m : monomials_){
+            if (m.coef == ZERO) continue;
+            if (monomials.size() != 0 && monomials.back().is_compatible(m)){
+                monomials.back().coef = monomials.back().coef + m.coef;
+            } else {
+                monomials.push_back(m);
             }
         }
-        if (nic_wpisalem) str << "0";
+    }
+
+    polynomial(const rational& r) : polynomial({{{}, r}}) {}
+
+    friend ostream& operator <<(ostream& str, const polynomial &p) {
+        bool first_token = true;
+        for(const monomial& m : p.monomials){
+            if (m.coef != ZERO){
+                if (m.coef < ZERO) str << m;
+                else {
+                    if (!first_token) str << "+";
+                    str << m;
+                }
+                first_token = false;
+            }
+        }
+        if (first_token) str << "0";
         return str;
+    }
+
+    polynomial operator+ (const polynomial& o){
+        vector<monomial> res_monomials(monomials);
+        copy(o.monomials.begin(), o.monomials.end(), back_inserter(res_monomials));
+        return polynomial(res_monomials);
+    }
+
+    polynomial operator* (const rational& r){
+        vector<monomial> res_monomials;
+        for(const monomial& m : monomials){
+            res_monomials.push_back(monomial(m.variables, m.coef * r));
+        }
+        return polynomial(res_monomials);
+    }
+
+    void operator+= (const polynomial& o) {
+        polynomial sum = *this + o;
+        monomials = ::std::move(sum.monomials);
     }
 };
 
-polynomial simplify(const polynomial& p){
-    polynomial res;
-    for(const monomial &m : p.monomials){
-        bool succ = false;
-        for (monomial& m2 : res.monomials){
-            if (m2.token == m.token){
-                m2.amount = m2.amount + m.amount;
-                succ = true;
-                break;
-            }
+bool is_rational_char(char c){
+    if (c == '+' || c == '-') return true;
+    if (isdigit(c)) return true;
+    return c == '/' || c == '\\';
+}
+
+monomial parse_monomial(const string &str){
+    int iter = 0;
+    while(iter < str.size() && is_rational_char(str[iter])) iter++;
+    rational coef(1, 1);
+    if (iter != 0) coef = parse_rational(str.substr(0, iter));
+    vector<pair<char, int>> variables;
+    while(iter < str.size()){
+        char var_name = str[iter];
+        iter++;
+        int power = 1;
+        if (iter < str.size() && str[iter] == '^'){
+            iter++;
+            int pow_idx = iter;
+            while(pow_idx < str.size() && (isdigit(str[pow_idx]))) pow_idx++;
+            power = stoi(str.substr(iter, pow_idx - iter));
+            iter = pow_idx;
         }
-        if (!succ){
-            res.monomials.push_back(m);
-        }
+        variables.push_back({var_name, power});
     }
-    return res;
+    return monomial(variables, coef);
 }
 
-polynomial add(const polynomial& a, const polynomial& b){
-    polynomial res;
-    for(const monomial& m : a.monomials) res.monomials.push_back(m);
-    for(const monomial& m : b.monomials) res.monomials.push_back(m);
-    return simplify(res);
-}
-
-polynomial mul(const rational& r, const polynomial& p){
-    polynomial res;
-    for(const monomial& m : p.monomials){
-        res.monomials.push_back({m.token, m.amount * r});
-    }
-    return res;
-}
-
-rational parse_rational(const std::string &str){
-    int idx_of_slash = -1;
-    for(int i = 0; i < str.size(); ++i){
-        if (str[i] == '/' || str[i] == '\\'){
-            if (idx_of_slash != -1){
-                std::cerr << "TOKEN ZAWIERA ZBYT DUZO UKOSNIKOW!!" << std::endl;
-                exit(136);
-            }
-            idx_of_slash = i;
-        }
-    }
-    if (idx_of_slash == -1){
-        return rational(stoll(str), 1);
-    }
-    return rational(stoll(str.substr(0, idx_of_slash)), stoll(str.substr(idx_of_slash + 1)));
-}
-
-polynomial parse_polynomial(const std::string &str){
+polynomial parse_polynomial(const string &str){
     std::vector<int> token_idx;
     for(int i = 1; i < str.size(); ++i){
         if (str[i] == '+' || str[i] == '-'){
@@ -98,15 +165,10 @@ polynomial parse_polynomial(const std::string &str){
     }
     token_idx.push_back(str.size());
     int prev_end = 0;
-    polynomial res;
+    vector<monomial> res_monomials;
     for(int x : token_idx){
-        int dokiedy = prev_end;
-        while(dokiedy < x && ((str[dokiedy] <= '9' && str[dokiedy >= '0']) || str[dokiedy] == '/' || str[dokiedy] == '\\')) dokiedy++;
-        rational coef(1, 1);
-        if (dokiedy != prev_end) coef = parse_rational(str.substr(prev_end, dokiedy - prev_end));
-        if (prev_end != 0 && str[prev_end - 1] == '-') coef.l *= -1;
-        res.monomials.push_back({str.substr(dokiedy, x - dokiedy), coef});
-        prev_end = x + 1;
+        res_monomials.push_back(parse_monomial(str.substr(prev_end, x - prev_end)));
+        prev_end = x;
     }
-    return res;
+    return polynomial(res_monomials);
 }

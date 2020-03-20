@@ -108,8 +108,7 @@ void solve_task(task& t){
                     t.M[j][zz] = t.M[j][zz] + coef * t.M[idx][zz];
                 }
                 for(int zz = 0; zz < t.dol; ++zz){
-                    //t.D[j][zz] = t.D[j][zz] + coef * t.D[idx][zz];
-                    t.D[j][zz] = add(t.D[j][zz], mul(coef, t.D[idx][zz]));
+                    t.D[j][zz] += t.D[idx][zz] * coef;
                 }
             }
         }
@@ -136,7 +135,7 @@ void solve_task(task& t){
                 t.M[p.first][zz] = coef * t.M[p.first][zz];
             }
             for(int zz = 0; zz < t.dol; ++zz){
-                t.D[p.first][zz] = mul(coef, t.D[p.first][zz]);
+                t.D[p.first][zz] = t.D[p.first][zz] * coef;
             }
         }
     }
