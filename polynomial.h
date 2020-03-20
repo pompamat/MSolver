@@ -112,13 +112,17 @@ struct polynomial {
         return str;
     }
 
-    polynomial operator+ (const polynomial& o){
+    polynomial operator+ (const polynomial& o) const {
         vector<monomial> res_monomials(monomials);
         copy(o.monomials.begin(), o.monomials.end(), back_inserter(res_monomials));
         return polynomial(res_monomials);
     }
 
-    polynomial operator* (const rational& r){
+    polynomial operator- (const polynomial& o) const {
+        return *this + (o * (-ONE));
+    }
+
+    polynomial operator* (const rational& r) const {
         vector<monomial> res_monomials;
         for(const monomial& m : monomials){
             res_monomials.push_back(monomial(m.variables, m.coef * r));
@@ -126,7 +130,7 @@ struct polynomial {
         return polynomial(res_monomials);
     }
 
-    polynomial operator* (const polynomial& o){
+    polynomial operator* (const polynomial& o) const {
         vector<monomial> res_monomials;
         for(const monomial& m : monomials) {
             for (const monomial& m2 : o.monomials){
