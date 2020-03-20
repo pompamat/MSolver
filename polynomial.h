@@ -12,8 +12,6 @@ using std::ostream;
 using std::sort;
 using std::string;
 
-using namespace std;
-
 struct monomial { // struct representing single monomial, eg. -2/3pq^2
     vector<pair<char, int>> variables; //with positive integer multiplicity
     rational coef;
