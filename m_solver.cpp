@@ -1,5 +1,6 @@
 #include "rational.h"
 #include "polynomial.h"
+#include "utils.h"
 
 #include <cmath>
 #include <iostream>
@@ -16,7 +17,7 @@ struct task {
     vector<vector<polynomial>> D;
 
     void print(){
-        int tot = niewiad + dol;
+        int tot = niewiad + dol + 1;
         vector<vector<string>> V(rown, vector<string>(tot));
         for(int i = 0; i < rown; ++i){
             for(int j = 0; j < niewiad; ++j){
@@ -24,30 +25,14 @@ struct task {
                 oss << M[i][j];
                 V[i][j] = oss.str();
             }
+            V[i][niewiad] = "";
             for(int j = 0; j < dol; ++j){
                 ostringstream oss;
                 oss << D[i][j];
-                V[i][niewiad + j] = oss.str();
+                V[i][niewiad + j + 1] = oss.str();
             }
         }
-        vector<int> najwczesniej_zaczecie;
-        najwczesniej_zaczecie.push_back(0);
-        for(int i = 0; i < tot; ++i){
-            int dl = 0;
-            for(int j = 0; j < rown; ++j) dl = max(dl, (int) V[j][i].size());
-            najwczesniej_zaczecie.push_back((i == niewiad ? 2 : 1) + dl + najwczesniej_zaczecie.back());
-        }
-        for(int i = 0; i < rown; ++i){
-            for(int j = 0; j < tot; ++j){
-                int t = najwczesniej_zaczecie[j];
-                while(t + V[i][j].size() < najwczesniej_zaczecie[j + 1]){
-                    cout << " ";
-                    t++;
-                }
-                cout << V[i][j];
-            }
-            cout << endl;
-        }
+        print_str_matrix(V);
     }
 };
 
