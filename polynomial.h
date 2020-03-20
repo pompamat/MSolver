@@ -60,6 +60,12 @@ struct monomial { // struct representing single monomial, eg. -2/3pq^2
         return true;
     }
 
+    monomial operator* (const monomial& o) const {
+        vector<pair<char, int>> variables_(variables);
+        copy(o.variables.begin(), o.variables.end(), back_inserter(variables_));
+        return monomial(variables_, coef * o.coef);
+    }
+
     bool operator< (const monomial& o) const {
         int t = 0;
         while(t < variables.size()){
@@ -120,6 +126,16 @@ struct polynomial {
         return polynomial(res_monomials);
     }
 
+    polynomial operator* (const polynomial& o){
+        vector<monomial> res_monomials;
+        for(const monomial& m : monomials) {
+            for (const monomial& m2 : o.monomials){
+                res_monomials.push_back(m * m2);
+            }
+        }
+        return polynomial(res_monomials);
+    }
+
     void operator+= (const polynomial& o) {
         polynomial sum = *this + o;
         monomials = ::std::move(sum.monomials);
@@ -135,8 +151,9 @@ bool is_rational_char(char c){
 monomial parse_monomial(const string &str){
     int iter = 0;
     while(iter < str.size() && is_rational_char(str[iter])) iter++;
-    rational coef(1, 1);
-    if (iter != 0) coef = parse_rational(str.substr(0, iter));
+    rational coef = ONE;
+    if (iter == 1 && str[0] == '-') coef = -ONE;
+    if (iter > 1 || (iter == 1 && isdigit(str[0]))) coef = parse_rational(str.substr(0, iter));
     vector<pair<char, int>> variables;
     while(iter < str.size()){
         char var_name = str[iter];
