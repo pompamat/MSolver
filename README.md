@@ -3,7 +3,7 @@ MSolver is designed as an *educational tool*, aiming to show how to solve system
 
 To install it, clone or download the repository and compile files `m_solver.cpp` and `determinant.cpp`. Compilation requires C++11 standard or newer.
 
-Below we describe basic usages of MSolver with examples.
+Below we describe basic usages of MSolver with examples. Please note, that the actual output is more verbose and presents subsequent operations required to archieve described results. In the examples, only the final result of computation is presented.
 
 ## m_solver.cpp file ##
 m_solver.cpp contains an implementation of Gaussian Elimination algorithm, explainig the steps executed along the computation. Input specification is as follows:
