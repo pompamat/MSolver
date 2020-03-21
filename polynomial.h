@@ -78,7 +78,6 @@ struct monomial { // struct representing single monomial, eg. -2/3pq^2
     }
 };
 
-
 struct polynomial {
     vector<monomial> monomials;
 
@@ -88,6 +87,8 @@ struct polynomial {
             if (m.coef == ZERO) continue;
             if (monomials.size() != 0 && monomials.back().is_compatible(m)){
                 monomials.back().coef = monomials.back().coef + m.coef;
+                if (monomials.back().coef == ZERO)
+                    monomials.pop_back();
             } else {
                 monomials.push_back(m);
             }
@@ -190,4 +191,17 @@ polynomial parse_polynomial(const string &str){
         prev_end = x;
     }
     return polynomial(res_monomials);
+}
+
+pair<bool, rational> is_rational_multiple(const polynomial& a, const polynomial& b) {
+    if (a.monomials.size() != b.monomials.size()) return {false, ONE};
+    if (b.monomials.size() == 0) return {false, ONE};
+    for (int i = 0; i < b.monomials.size(); ++i){
+        if (!a.monomials[i].is_compatible(b.monomials[i])) return {false, ONE};
+    }
+    rational coef = a.monomials[0].coef / b.monomials[0].coef;
+    for (int i = 1; i < b.monomials.size(); ++i){
+        if (a.monomials[i].coef / b.monomials[i].coef != coef) return {false, ONE};
+    }
+    return {true, coef};
 }

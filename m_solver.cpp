@@ -55,15 +55,6 @@ void read_task(task& t){
     }
 }
 
-const long long INV = (1ll << 60);
-
-long long score_rationala(const rational& r){
-    if (r.l == 0) return INV;
-    return 5 * r.m + 2 * abs(r.l);
-}
-
-const string LONG_LINE = "===============================";
-
 void solve_task(task& t){
     t.print();
     cout << LONG_LINE << endl;
@@ -74,7 +65,8 @@ void solve_task(task& t){
         long long b_score = INV;
         int idx = -1;
         for(int j = acc_rows; j < t.rown; ++j){
-            long long n_score = score_rationala(t.M[j][i]);
+            if (t.M[j][i] == ZERO) continue;
+            long long n_score = score_rational(t.M[j][i]);
             if (b_score > n_score){
                 b_score = n_score;
                 idx = j;
