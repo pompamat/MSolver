@@ -76,7 +76,7 @@ void solve_task(task& t){
             cout << "Nie mam czym wyzerowac kolumny " << i + 1 << endl;
             continue;
         }
-        for(int j = 0; j < t.rown; ++j){
+        for(int j = (t.dol == 0 ? acc_rows : 0); j < t.rown; ++j){
             if (j == idx) continue;
             if (t.M[j][i].l != 0){
                 rational coef = -(t.M[j][i] / t.M[idx][i]);
